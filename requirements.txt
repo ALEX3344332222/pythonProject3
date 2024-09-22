@@ -1,0 +1,9 @@
+uvicorn~=0.30.6
+fastapi~=0.115.0
+SQLAlchemy~=2.0.35
+starlette~=0.38.5
+mutagen~=1.47.0
+psycopg2
+Jinja2
+python-multipart
+
