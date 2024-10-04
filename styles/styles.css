@@ -1,0 +1,210 @@
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Высота экрана */
+}
+
+.container {
+    flex-grow: 1; /* Контейнер растягивается, заполняя оставшееся пространство */
+}
+
+footer {
+    background-color: #000;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+}
+
+
+                .button-container_2 {
+            position: absolute; /* или position: fixed; для фиксации относительно окна браузера */
+            top: 37px; /* Задает вертикальное положение */
+            right: 770px; /* Задает горизонтальное положение */
+            display: flex;
+            align-items: center;
+            gap: 16px; /* Задает промежуток между кнопками */
+        }
+
+        #close-popup {
+            position: absolute; /* Устанавливаем абсолютное позиционирование */
+            top: 0px; /* Устанавливаем отступ от верхней границы родительского элемента */
+            right: 0px; /* Устанавливаем отступ от правой границы родительского элемента */
+        }
+        .button-container_1 {
+            position: absolute; /* или position: fixed; для фиксации относительно окна браузера */
+            top: 10px; /* Задает вертикальное положение */
+            right: 630px; /* Задает горизонтальное положение */
+            display: flex;
+            align-items: center;
+            gap: 16px; /* Задает промежуток между кнопками */
+        }
+        .button-container_3 {
+            position: absolute; /* или position: fixed; для фиксации относительно окна браузера */
+            top: 5px; /* Задает вертикальное положение */
+            right: 32px; /* Задает горизонтальное положение */
+            display: flex;
+            align-items: center;
+            gap: 16px; /* Задает промежуток между кнопками */
+        }
+        .button-container_4 {
+            position: absolute; /* или position: fixed; для фиксации относительно окна браузера */
+            top: 0px; /* Задает вертикальное положение */
+            right: 0px; /* Задает горизонтальное положение */
+            display: flex;
+            align-items: center;
+            gap: 16px; /* Задает промежуток между кнопками */
+        }
+
+        .button {
+            transition: transform 0.3s ease;
+        }
+
+        .button:hover {
+            transform: scale(1.2); /* Увеличение кнопки при наведении */
+        }
+
+        img {
+            width: 20px; /* Задает размер изображения */
+            height: 20px; /* Задает размер изображения */
+        }
+
+
+
+    .spotify-audio-player {
+        width: 500px; /* Ширина плеера */
+        height: 40px; /* Высота плеера */
+        background-color: #1db954; /* Цвет фона как у Spotify */
+        border-radius: 24px; /* Скругление углов */
+        border: none; /* Без рамки */
+        outline: none; /* Без обводки */
+    }
+
+/* Стили для прогресс-бара */
+    .progress-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-left: 630px;
+        top: 5px; /* Задает вертикальное положение */
+    }
+    .spotify-audio-player::-webkit-media-controls {
+        background-color: #1db954; /* Цвет фона контролов */
+    }
+
+    .spotify-audio-player::-webkit-media-controls-enclosure {
+        background-color: #1db954; /* Цвет фона контейнера */
+    }
+
+
+
+        /* Стили для кастомного аудиоплеера */
+        .track-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 10px;
+            background-color: #6E7581;
+            border-radius: 10px;
+            color: white;
+        }
+
+        .track-info {
+            display: flex;
+            align-items: center;
+            width: 50%;
+        }
+
+        .track-image-container {
+            position: relative;
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+            display: flex; /* Добавляем Flexbox */
+            justify-content: center; /* Выровняем по центру по горизонтали */
+            align-items: center; /* Выровняем по центру по вертикали */
+        }
+
+        .track-info {
+            position: relative; /* Это нужно, чтобы текст фиксировался относительно контейнера .track-info */
+        }
+
+        .absd {
+            position: absolute;
+            white-space: nowrap; /* Отключает перенос текста */
+            overflow: hidden; /* Если текст длиннее контейнера, скрываем его */
+            text-overflow: ellipsis; /* Добавляем "..." в конце, если текст обрезан */
+            top: 50%; /* Фиксируем по вертикали (можно отрегулировать) */
+            left: 70px; /* Фиксируем отступ слева */
+            transform: translateY(-50%); /* Центрируем по вертикали относительно .track-info */
+        }
+
+        .track-image-container img {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            object-fit: cover; /* Добавляем для корректного отображения изображения */
+        }
+
+        .play-pause-btn {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .track-image-container:hover .play-pause-btn {
+            opacity: 1;
+        }
+
+        .progress-bar {
+    width: 100%;
+    height: 4px;
+    background-color: #444;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+#popup-progress {
+    height: 100%;
+    background-color: #1DB954; /* Цвет прогресса */
+    width: 0%; /* Начальное значение для прогресса */
+}
+
+        .progress-bar div {
+            height: 100%;
+            background-color: #1db954;
+            border-radius: 5px;
+        }
+
+        .audio-time {
+            font-size: 0.8em;
+            margin-right: 0px;
+            color: #fff;
+            margin-left: 0px;
+
+        }
+
+        .volume-control input {
+            cursor: pointer;
+            width: 100px;
+        }
+
+    .highlight {
+    transition: filter 0.3s ease;
+    filter: brightness(1.5); /* Увеличиваем яркость для подсветки */
+}
+

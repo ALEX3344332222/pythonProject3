@@ -1,9 +1,12 @@
-uvicorn~=0.30.6
-fastapi~=0.115.0
-SQLAlchemy~=2.0.35
-starlette~=0.38.5
-mutagen~=1.47.0
+uvicorn
+fastapi
+SQLAlchemy
+starlette
+mutagen
 psycopg2
 Jinja2
 python-multipart
+httpx
+itsdangerous
+pydantic
 

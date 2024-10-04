@@ -1,0 +1,467 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/styles/styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Spotify</title>
+    <script src="https://yastatic.net/s3/passport-sdk/autofill/v1/sdk-suggest-with-polyfills-latest.js"></script>
+    <script src="https://yastatic.net/s3/passport-sdk/autofill/v1/sdk-suggest-token-with-polyfills-latest.js"></script>
+</head>
+<body class="bg-gray-700">
+    {% include 'header.html' %}
+
+    <div class="container mx-auto p-3">
+        <div id="message" class="text-white mt-4"></div>
+            <h1 class="text-white text-3xl font-bold mb-4 text-center">Моя музыка</h1>
+        <div class="grid grid-cols-2 gap-2">
+            {% for track in tracks %}
+            <div class="track-container">
+                <div class="track-info">
+                    <div class="track-image-container">
+                        {% if track.file_path_img %}
+                        <img src="{{ track.file_path_img }}" id="image-{{ loop.index }}" alt="Track Image" class="h-12 w-12 rounded-lg object-cover">
+                        {% else %}
+                        <img src="/images/default_image.jpg" alt="Default Image" class="h-12 w-12 rounded-lg object-cover">
+                        {% endif %}
+                        <div class="play-pause-btn" id="play-pause-btn-{{ loop.index }}">
+                            <img src="/images/play.png" alt="Play" class="h-6 w-6">
+                        </div>
+                    </div>
+
+                    <!-- Текст с фиксированным положением -->
+                    <div class="absd">
+                        <h2 class="text-xl font-semibold text-gray-900" id="track-title-{{ loop.index }}">{{ track.title }}</h2>
+                        <p class="text-gray-800" id="track-artist-{{ loop.index }}">{{ track.artist }}</p>
+                    </div>
+                </div>
+                    <form action="/remove-from-playlist" method="post" class="mt-2" onsubmit="removeFromPlaylist(event, {{ track.track_id }});">
+                        <input type="hidden" name="track_id" value="{{ track.track_id }}">
+                        <button type="submit" class="focus:outline-none ml-10" aria-label="Удалить из My Music">
+                            <img src="/images/icons8-удалить.png" alt="Удалить" class="h-5 w-5 transition duration-300">
+                        </button>
+                    </form>
+
+                <!-- Кастомный аудиоплеер -->
+                <audio style="display: none;">
+                    <source src="{{ track.file_path }}" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
+            {% endfor %}
+        </div>
+
+<div id="popup-modal" class="hidden fixed inset-x-0 bottom-0 p-1 bg-black shadow-lg z-0 flex flex-col">
+    <div class="flex items-center space-x-2 mb-0">
+    <img id="popup-track-image" src="" alt="Track Image" class="h-16 w-16 rounded-lg object-cover">
+    <div class="flex-1">
+        <h2 id="popup-track-title" class="text-xl font-semibold text-white">Track Title</h2>
+        <p id="popup-track-artist" class="text-gray-300">Track Artist</p>
+    </div>
+    <!-- Прогресс-бар и время размещены справа -->
+    <div class="progress-container" id="popup-progress-container" style="width: 550px; cursor: pointer;">
+        <div class="progress-bar">
+            <div id="popup-progress" style="width: 0%; background-color: #1DB954; height: 4px; border-radius: 2px;"></div>
+        </div>
+        <div class="audio-time text-white mt-0 text-center" style="display: flex; justify-content: center; align-items: center;">
+            <span id="popup-current-time">0:00</span> / <span id="popup-duration-time">0:00</span>
+        </div>
+
+
+
+        <div>
+        <button id="close-popup" class="text-white ml-0 mt-0">✖</button>
+        </div>
+</div>
+        <div class="volume-control-global mb-1 flex items-center" style="cursor: pointer; margin-right: 35px; position: relative;">
+                <img src="/images/icons8-voice-50.png" class="h-4 w-4 volume-icon" id="volume-icon">
+                <div class="volume-slider-container" id="volume-slider-container">
+                    <div class="volume-slider-background"></div>
+                    <input type="range" id="global-volume-slider" class="range range-xs volume-slider" min="0" max="1" step="0.01" value="1">
+                </div>
+            </div>
+
+    <div class="button-container_1 mt-4 flex space-x-2">
+        <button id="prev-track" class="button text-white">
+            <img src="/images/prev.png" alt="Previous">
+        </button>
+        <button id="play-pause-popup" class="button text-white">
+            <img src="/images/play.png" alt="Play">
+        </button>
+        <button id="next-track" class="button text-white">
+            <img src="/images/next.png" alt="Next">
+        </button>
+    </div>
+
+
+    <audio id="popup-audio-player" class="spotify-audio-player">
+        <source id="popup-audio-source" src="" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+</div>
+</div>
+    </div>
+
+</body>
+
+<style>
+    .volume-slider-container {
+        display: none; /* Скрываем контейнер по умолчанию */
+        position: absolute;
+        bottom: 60px; /* Смещение контейнера над иконкой */
+        left: 60%;
+        transform: translateX(-50%);
+        z-index: 10;
+        height: auto; /* Разрешаем контейнеру подстраиваться под содержимое */
+    }
+
+    .volume-slider-background {
+        position: absolute;
+        top: -30px; /* Смещаем подложку немного выше */
+        left: 10px; /* Центрируем подложку относительно ползунка */
+        width: 50px; /* Ширина подложки */
+        height: 250px; /* Увеличенная высота подложки */
+        background-color: rgba(0, 0, 0, 0);
+        border-radius: 10px;
+        z-index: -1;
+    }
+
+    .volume-slider {
+        position: relative;
+        width: 100px;
+        height: 150px; /* Высота ползунка */
+        transform: rotate(270deg);
+        transform-origin: bottom center;
+    }
+
+    .show {
+        display: block !important; /* Показываем контейнер при наличии класса "show" */
+    }
+    /* Стилизация ползунка */
+        .range {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 80px; /* Ширина ползунка */
+            height: 7px; /* Высота ползунка */
+            background: bg-gray-800;
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+        }
+
+
+        .range:hover {
+            opacity: 1;
+        }
+
+        .range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 8px; /* Ширина ручки ползунка */
+            height: 8px; /* Высота ручки ползунка */
+            background: #1db954;
+            cursor: pointer;
+        }
+
+        .range::-moz-range-thumb {
+            width: 5px; /* Ширина ручки ползунка */
+            height: 5px; /* Высота ручки ползунка */
+            background: #1db954;
+            cursor: pointer;
+        }
+
+        .range::-ms-thumb {
+            width: 5px; /* Ширина ручки ползунка */
+            height: 5px; /* Высота ручки ползунка */
+            background: #1db954;
+            cursor: pointer;
+        }
+
+        .range::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 5px; /* Высота дорожки ползунка */
+            background: #1db954;
+        }
+
+        .range::-moz-range-track {
+            width: 100%;
+            height: 5px; /* Высота дорожки ползунка */
+            background: white;
+        }
+
+        .range::-ms-track {
+            width: 100%;
+            height: 5px; /* Высота дорожки ползунка */
+            background: white;
+        }
+</style>
+<script>
+    const volumeIcon = document.getElementById('volume-icon');
+    const volumeSliderContainer = document.getElementById('volume-slider-container');
+
+    // Показываем ползунок при наведении на иконку
+    volumeIcon.addEventListener('mouseenter', function() {
+        volumeSliderContainer.classList.add('show');
+    });
+
+    // Скрываем ползунок при уходе мыши с контейнера с ползунком
+    volumeSliderContainer.addEventListener('mouseleave', function() {
+        volumeSliderContainer.classList.remove('show');
+    });
+</script>
+<script>
+    window.YaAuthSuggest.init(
+    {
+      client_id: "983a1fbebb3b4b6a851c645b7bb541bf",
+      response_type: "token",
+      redirect_uri: "http://localhost:8000/oauth.php?provider=yandex"
+    },
+    "http://localhost",
+    { view: "default" }
+  )
+  .then(({handler}) => handler())
+  .then(data => console.log('Сообщение с токеном', data))
+  .catch(error => console.log('Обработка ошибки', error))
+
+   YaSendSuggestToken('http://localhost:8000', {
+      flag: true
+   }
+   )
+</script>
+<script>
+    const audioPlayers = document.querySelectorAll('audio');
+    const playButtons = document.querySelectorAll('.play-pause-btn');
+    const globalVolumeSlider = document.getElementById('global-volume-slider');
+    const popupModal = document.getElementById('popup-modal');
+    const popupTrackImage = document.getElementById('popup-track-image');
+    const popupTrackTitle = document.getElementById('popup-track-title');
+    const popupTrackArtist = document.getElementById('popup-track-artist');
+    const popupAudioPlayer = document.getElementById('popup-audio-player');
+    const popupAudioSource = document.getElementById('popup-audio-source');
+    const closePopup = document.getElementById('close-popup');
+    const popupProgressBar = document.getElementById('popup-progress');
+    const popupCurrentTime = document.getElementById('popup-current-time');
+    const popupDurationTime = document.getElementById('popup-duration-time');
+    const playPausePopup = document.getElementById('play-pause-popup');
+    const prevTrack = document.getElementById('prev-track');
+    const nextTrack = document.getElementById('next-track');
+
+    let currentTrackIndex = 0;
+    let isDragging = false;
+    let isSeeking = false;
+    let isModalOpen = false; // Переменная для отслеживания состояния модального окна
+
+    globalVolumeSlider.addEventListener('input', () => {
+        const volume = globalVolumeSlider.value;
+        audioPlayers.forEach(player => {
+            player.volume = volume;
+        });
+    });
+
+    playButtons.forEach((playBtn, index) => {
+        const audioPlayer = audioPlayers[index];
+
+        playBtn.addEventListener('click', () => {
+            console.log('Открытие модального окна'); // Лог
+            updatePopupPlayer(index);
+            popupModal.classList.remove('hidden');
+            isModalOpen = true; // Устанавливаем состояние модального окна в открытое
+        });
+
+        audioPlayer.addEventListener('canplaythrough', () => {
+            console.log(`Длительность трека ${index + 1}: ${audioPlayer.duration}`);
+        });
+    });
+
+    function updatePopupPlayer(index) {
+        const audioPlayer = audioPlayers[index];
+        const trackImage = document.querySelector(`#image-${index + 1}`).src;
+        const trackTitle = document.getElementById(`track-title-${index + 1}`).textContent;
+        const trackArtist = document.getElementById(`track-artist-${index + 1}`).textContent;
+        const trackFilePath = audioPlayer.querySelector('source').src;
+
+        popupTrackImage.src = trackImage;
+        popupTrackTitle.textContent = trackTitle;
+        popupTrackArtist.textContent = trackArtist;
+        popupAudioSource.src = trackFilePath;
+        popupAudioPlayer.load();
+        popupAudioPlayer.play();
+        playPausePopup.querySelector('img').src = '/images/pause.png';
+
+        popupAudioPlayer.addEventListener('loadedmetadata', () => {
+            popupDurationTime.textContent = formatTime(popupAudioPlayer.duration);
+        });
+
+        popupAudioPlayer.addEventListener('timeupdate', () => {
+            if (!isSeeking && isModalOpen) { // Проверка состояния модального окна
+                const progressPercent = (popupAudioPlayer.currentTime / popupAudioPlayer.duration) * 100;
+                popupProgressBar.style.width = progressPercent + '%';
+                popupCurrentTime.textContent = formatTime(popupAudioPlayer.currentTime);
+
+                // Проверка на окончание трека
+                const currentPosition = popupAudioPlayer.currentTime;
+                const duration = popupAudioPlayer.duration;
+
+                // Если разница между текущей и предполагаемой позицией меньше 0.1, переключаем трек
+                if (Math.abs(duration - currentPosition) < 0.1) {
+                    currentTrackIndex = (currentTrackIndex + 1) % audioPlayers.length; // Увеличиваем индекс текущего трека
+                    updatePopupPlayer(currentTrackIndex); // Обновляем плеер с новым треком
+                }
+            }
+        });
+    }
+
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${minutes}:${secs < 10 ? '0' + secs : secs}`;
+    }
+
+    closePopup.addEventListener('click', () => {
+        console.log('Закрытие модального окна'); // Лог
+        popupAudioPlayer.pause();
+        popupAudioPlayer.currentTime = 0; // Сбрасываем время воспроизведения
+        popupModal.classList.add('hidden');
+        isModalOpen = false; // Устанавливаем состояние модального окна в закрытое
+    });
+
+    prevTrack.addEventListener('click', () => {
+        currentTrackIndex = (currentTrackIndex - 1 + audioPlayers.length) % audioPlayers.length;
+        updatePopupPlayer(currentTrackIndex);
+    });
+
+    nextTrack.addEventListener('click', () => {
+        currentTrackIndex = (currentTrackIndex + 1) % audioPlayers.length;
+        updatePopupPlayer(currentTrackIndex);
+    });
+
+    playPausePopup.addEventListener('click', () => {
+        if (popupAudioPlayer.paused) {
+            popupAudioPlayer.play();
+            playPausePopup.querySelector('img').src = '/images/pause.png';
+        } else {
+            popupAudioPlayer.pause();
+            playPausePopup.querySelector('img').src = '/images/play.png';
+        }
+    });
+
+    const popupProgressContainer = document.getElementById('popup-progress-container');
+
+    popupProgressContainer.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        isSeeking = true;
+        seek(e);
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        isSeeking = false;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            seek(e);
+        }
+    });
+
+    popupProgressContainer.addEventListener('click', (e) => {
+        seek(e);
+    });
+
+    function seek(e) {
+        const rect = popupProgressContainer.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const progressPercent = Math.max(0, Math.min(clickX / rect.width, 1));
+        const newTime = progressPercent * popupAudioPlayer.duration;
+
+        if (popupAudioPlayer.readyState > 0 && popupAudioPlayer.duration > 0) {
+            popupAudioPlayer.currentTime = newTime;
+            popupProgressBar.style.width = progressPercent * 100 + '%';
+
+            console.log(`Новая позиция: ${newTime}, Текущая позиция: ${popupAudioPlayer.currentTime}`);
+
+            if (!popupAudioPlayer.paused) {
+                popupAudioPlayer.play();
+            }
+        } else {
+            console.error("Трек не готов к воспроизведению или имеет некорректную длительность.");
+            console.log("readyState:", popupAudioPlayer.readyState);
+        }
+    }
+
+    popupAudioPlayer.addEventListener('error', (e) => {
+        console.error('Произошла ошибка в плеере:', e);
+        const error = e.target.error;
+        if (error) {
+            switch (error.code) {
+                case error.MEDIA_ERR_ABORTED:
+                    console.error('Воспроизведение было прервано пользователем.');
+                    break;
+                case error.MEDIA_ERR_NETWORK:
+                    console.error('Проблема с сетевым соединением.');
+                    break;
+                case error.MEDIA_ERR_DECODE:
+                    console.error('Ошибка при декодировании мультимедиа.');
+                    break;
+                case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                    console.error('Источник мультимедиа не поддерживается.');
+                    break;
+                default:
+                    console.error('Неизвестная ошибка.');
+                    break;
+            }
+        }
+    });
+</script>
+<script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(this);
+            const messageDiv = document.getElementById('message');
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    messageDiv.textContent = 'Файл успешно загружен!';
+                    messageDiv.style.color = 'green';
+                } else {
+                    messageDiv.textContent = 'Ошибка при загрузке файла.';
+                    messageDiv.style.color = 'red';
+                }
+            } catch (error) {
+                messageDiv.textContent = 'Произошла ошибка: ' + error.message;
+                messageDiv.style.color = 'red';
+            }
+        });
+    </script>
+<script>
+    async function removeFromPlaylist(event, trackId) {
+        event.preventDefault(); // Останавливаем стандартное поведение формы
+
+        const formData = new FormData(event.target); // Получаем данные формы
+
+        // Отправляем POST-запрос для удаления трека
+        const response = await fetch(event.target.action, {
+            method: 'POST',
+            body: formData,
+        });
+
+        console.log("Response status:", response.status); // Логируем статус ответа
+
+        if (response.ok) {
+            // Если удаление прошло успешно, перезагружаем страницу
+            window.location.reload();
+        } else {
+            const result = await response.json();
+            console.error('Ошибка при удалении трека из плейлиста:', result);
+        }
+    }
+</script>
+</html>
